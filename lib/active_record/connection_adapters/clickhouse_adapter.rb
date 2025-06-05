@@ -551,14 +551,28 @@ module ActiveRecord
       private
 
       def connect
+        if @config[:protocol].to_s == 'tcp'
+          require 'active_record/connection_adapters/clickhouse/tcp_connection'
+          @connection = Clickhouse::TcpConnection.new(
+            host: @connection_parameters[:host],
+            port: @connection_parameters[:port] || 9000,
+            username: @connection_config[:user],
+            password: @connection_config[:password],
+            database: @connection_config[:database]
+          )
+          return @connection
+        end
+
         @connection = @connection_parameters[:connection] || Net::HTTP.start(@connection_parameters[:host], @connection_parameters[:port], use_ssl: @connection_parameters[:ssl], verify_mode: OpenSSL::SSL::VERIFY_NONE)
 
-        @connection.ca_file = @connection_parameters[:ca_file] if @connection_parameters[:ca_file]
-        @connection.read_timeout = @connection_parameters[:read_timeout] if @connection_parameters[:read_timeout]
-        @connection.write_timeout = @connection_parameters[:write_timeout] if @connection_parameters[:write_timeout]
+        if @connection.is_a?(Net::HTTP)
+          @connection.ca_file = @connection_parameters[:ca_file] if @connection_parameters[:ca_file]
+          @connection.read_timeout = @connection_parameters[:read_timeout] if @connection_parameters[:read_timeout]
+          @connection.write_timeout = @connection_parameters[:write_timeout] if @connection_parameters[:write_timeout]
 
-        # Use clickhouse default keep_alive_timeout value of 10, rather than Net::HTTP's default of 2
-        @connection.keep_alive_timeout = @connection_parameters[:keep_alive_timeout] || 10
+          # Use clickhouse default keep_alive_timeout value of 10, rather than Net::HTTP's default of 2
+          @connection.keep_alive_timeout = @connection_parameters[:keep_alive_timeout] || 10
+        end
 
         @connection
       end
