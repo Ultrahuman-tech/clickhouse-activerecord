@@ -29,6 +29,7 @@ default: &default
   username: username
   password: password
   protocol: tcp # use ClickHouse native protocol (optional, default: http)
+  # requires `clickhouse-client` binary in PATH
   ssl: true # optional for using ssl connection
   debug: true # use for showing in to log technical information
   migrations_paths: db/clickhouse # optional, default: db/migrate_clickhouse
